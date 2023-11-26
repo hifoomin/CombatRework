@@ -26,7 +26,7 @@ namespace CombatRework.Components
             shouldIncrementTimer = characterBody.isSprinting;
             if (shouldIncrementTimer)
             {
-                sprintTimer += Time.deltaTime;
+                sprintTimer += Time.fixedDeltaTime;
             }
             else
             {

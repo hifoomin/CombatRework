@@ -33,7 +33,7 @@ namespace CombatRework.Hooks
                     var sprintController = self.GetComponent<SprintController>();
                     if (sprintController)
                     {
-                        var sprintSpeed = Mathf.Lerp(sprintController.sprintSpeedMin, sprintController.sprintSpeedMax, Mathf.Clamp01(Mathf.Min(sprintController.sprintTimer, sprintController.sprintSpeedDurationToMax)));
+                        var sprintSpeed = Mathf.Lerp(sprintController.sprintSpeedMin, sprintController.sprintSpeedDurationToMax, Util.Remap(sprintController.sprintTimer, 0f, sprintController.sprintSpeedDurationToMax,0f,1f));
                         sprintController.sprintSpeedMult = sprintSpeed;
                         orig *= sprintSpeed;
                     }

@@ -21,7 +21,7 @@ namespace CombatRework
         public const string PluginGUID = PluginAuthor + "." + PluginName;
 
         public const string PluginAuthor = "HIFU";
-        public const string PluginName = "AttackSlowdown";
+        public const string PluginName = "CombatRework";
         public const string PluginVersion = "1.0.0";
 
         public static ConfigEntry<float> slowdownPercent { get; set; }
