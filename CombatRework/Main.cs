@@ -24,6 +24,11 @@ namespace CombatRework
         public const string PluginName = "CombatRework";
         public const string PluginVersion = "1.0.0";
 
+        public static ConfigEntry<bool> important1 { get; set; }
+        public static ConfigEntry<bool> important2 { get; set; }
+        public static ConfigEntry<bool> important3 { get; set; }
+        public static ConfigEntry<bool> important4 { get; set; }
+
         public static ConfigEntry<float> slowdownPercent { get; set; }
         public static ConfigEntry<float> slowdownLinger { get; set; }
         public static ConfigEntry<bool> slowdownAgile { get; set; }
@@ -82,19 +87,29 @@ namespace CombatRework
 
         public void AddConfig()
         {
-            slowdownPercent = Config.Bind("Slowdown", "Slowdown Percent", 0.4f, "Decimal. The percent of slow applied while using a combat skill.");
+            important1 = Config.Bind("_! IMPORTANT !", "Important", true, "All players must have the same config in order for the mod to work properly in multiplayer!");
+            important2 = Config.Bind("Slowdown", "Important", true, "All players must have the same config in order for the mod to work properly in multiplayer!");
+            important3 = Config.Bind("Changes for Slowdown", "Important", true, "All players must have the same config in order for the mod to work properly in multiplayer!");
+            important4 = Config.Bind("Changes to Sprinting", "Important", true, "All players must have the same config in order for the mod to work properly in multiplayer!");
+
+            slowdownPercent = Config.Bind("Slowdown", "Slowdown Percent", 0.6f, "Decimal. The percent of slow applied while using a combat skill.");
             slowdownLinger = Config.Bind("Slowdown", "Slowdown Linger", 0.75f, "How long slowdown should linger for after using a combat skill.");
             slowdownScale = Config.Bind("Slowdown", "Slowdown Scale", true, "Should slowdown scale with the main hurtbox size to not feel as shit on survivors with a big hurtbox?");
             slowdownJumpPercent = Config.Bind("Slowdown", "Slowdown Jump Percent", 1f, "Decimal. The percent of jump force slow applied while using a combat skill.");
-            slowdownJumpLinger = Config.Bind("Slowdown", "Slowdown Jump Linger", 2f, "How long jump slowdown should linger for after using a combat skill.");
+            slowdownJumpLinger = Config.Bind("Slowdown", "Slowdown Jump Linger", 1.5f, "How long jump slowdown should linger for after using a combat skill.");
             slowdownAgile = Config.Bind("Slowdown", "Slowdown Agile", false, "Should slowdown apply to Agile skills?");
 
             changeCombatSkills = Config.Bind("Changes for Slowdown", "Change Combat Skills", true, "Changes some combat skills to not count as combat skills.");
             fixHurtBoxes = Config.Bind("Changes for Slowdown", "Change Large Hurt Boxes", true, "Changes Acrid's, REX' and MUL-T's hurt boxes to be smaller.");
 
-            sprintSpeedMin = Config.Bind("Changes to Sprinting", "Minimum Sprint Speed Multplier", 0.9f, "Decimal. This is a total multiplier, so the default 1.45x sprint speed is multiplied by this amount.");
-            sprintSpeedMax = Config.Bind("Changes to Sprinting", "Maximum Sprint Speed Multplier", 1.1f, "Decimal. This is a total multiplier, so the default 1.45x sprint speed is multiplied by this amount.");
-            sprintSpeedDurationToMax = Config.Bind("Changes to Sprinting", "Duration to achieve Maximum Sprint Speed Multiplier", 3f, "");
+            sprintSpeedMin = Config.Bind("Changes to Sprinting", "Minimum Sprint Speed Multiplier", 0.8f, "Decimal. This is a total multiplier, so the default 1.45x sprint speed is multiplied by this amount.");
+            sprintSpeedMax = Config.Bind("Changes to Sprinting", "Maximum Sprint Speed Multiplier", 1.4f, "Decimal. This is a total multiplier, so the default 1.45x sprint speed is multiplied by this amount.");
+            sprintSpeedDurationToMax = Config.Bind("Changes to Sprinting", "Duration to achieve Maximum Sprint Speed Multiplier", 2.5f, "");
+
+            ModSettingsManager.AddOption(new CheckBoxOption(important1));
+            ModSettingsManager.AddOption(new CheckBoxOption(important2));
+            ModSettingsManager.AddOption(new CheckBoxOption(important3));
+            ModSettingsManager.AddOption(new CheckBoxOption(important4));
 
             ModSettingsManager.AddOption(new StepSliderOption(slowdownPercent, new StepSliderConfig() { min = 0f, max = 10f, increment = 0.05f }));
             ModSettingsManager.AddOption(new StepSliderOption(slowdownLinger, new StepSliderConfig() { min = 0f, max = 5f, increment = 0.05f }));
