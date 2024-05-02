@@ -65,7 +65,7 @@ namespace CombatRework.Components
                 }
             }
 
-            if (shouldApplyJumpBuff)
+            if (shouldApplyJump)
             {
                 if (NetworkServer.active)
                 {

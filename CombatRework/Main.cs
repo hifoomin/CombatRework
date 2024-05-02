@@ -28,6 +28,8 @@ namespace CombatRework
         public static ConfigEntry<bool> important2 { get; set; }
         public static ConfigEntry<bool> important3 { get; set; }
         public static ConfigEntry<bool> important4 { get; set; }
+        public static ConfigEntry<bool> important5 { get; set; }
+        public static ConfigEntry<bool> important6 { get; set; }
 
         public static ConfigEntry<float> slowdownPercent { get; set; }
         public static ConfigEntry<float> slowdownLinger { get; set; }
@@ -42,12 +44,20 @@ namespace CombatRework
 
         public static ConfigEntry<float> sprintSpeedMin { get; set; }
         public static ConfigEntry<float> sprintSpeedMax { get; set; }
+        public static ConfigEntry<float> huntressSprintSpeedMin { get; set; }
+        public static ConfigEntry<float> huntressSprintSpeedMax { get; set; }
         public static ConfigEntry<float> sprintSpeedDurationToMax { get; set; }
+
+        public static ConfigEntry<float> hyperbolicSpeedCap { get; set; }
+
+        public static ConfigEntry<bool> enemyAIChanges { get; set; }
 
         public static ManualLogSource ASLogger;
 
         public static BuffDef slowdownBuff;
         public static BuffDef slowdownJumpBuff;
+
+        public static BodyIndex huntressBodyIndex;
 
         public void Awake()
         {
@@ -80,9 +90,19 @@ namespace CombatRework
                 mainHurtRex.height = 4.26f * 0.66f;
             }
 
+            On.RoR2.BodyCatalog.Init += BodyCatalog_Init;
+
             Hooks.BodyStart.Init();
             Hooks.Movement.Init();
             Hooks.RecalculateStats.Init();
+
+            Hooks.CharacterMaster.Init();
+        }
+
+        private void BodyCatalog_Init(On.RoR2.BodyCatalog.orig_Init orig)
+        {
+            orig();
+            huntressBodyIndex = BodyCatalog.FindBodyIndex("HuntressBody(Clone)");
         }
 
         public void AddConfig()
@@ -91,26 +111,34 @@ namespace CombatRework
             important2 = Config.Bind("Slowdown", "Important", true, "All players must have the same config in order for the mod to work properly in multiplayer!");
             important3 = Config.Bind("Changes for Slowdown", "Important", true, "All players must have the same config in order for the mod to work properly in multiplayer!");
             important4 = Config.Bind("Changes to Sprinting", "Important", true, "All players must have the same config in order for the mod to work properly in multiplayer!");
+            important5 = Config.Bind("Changes to AI", "Important", true, "All players must have the same config in order for the mod to work properly in multiplayer!");
+            important6 = Config.Bind("Changes to AI", "Important", true, "All players must have the same config in order for the mod to work properly in multiplayer!");
 
-            slowdownPercent = Config.Bind("Slowdown", "Slowdown Percent", 0.6f, "Decimal. The percent of slow applied while using a combat skill.");
+            slowdownPercent = Config.Bind("Slowdown", "Slowdown Percent", 1f, "Decimal. The percent of slow applied while using a combat skill.");
             slowdownLinger = Config.Bind("Slowdown", "Slowdown Linger", 0.75f, "How long slowdown should linger for after using a combat skill.");
-            slowdownScale = Config.Bind("Slowdown", "Slowdown Scale", true, "Should slowdown scale with the main hurtbox size to not feel as shit on survivors with a big hurtbox?");
+            slowdownScale = Config.Bind("Slowdown", "Slowdown Scales?", true, "Should slowdown scale with the main hurtbox size to not feel as shit on survivors with a big hurtbox?");
             slowdownJumpPercent = Config.Bind("Slowdown", "Slowdown Jump Percent", 1f, "Decimal. The percent of jump force slow applied while using a combat skill.");
-            slowdownJumpLinger = Config.Bind("Slowdown", "Slowdown Jump Linger", 1.5f, "How long jump slowdown should linger for after using a combat skill.");
-            slowdownAgile = Config.Bind("Slowdown", "Slowdown Agile", false, "Should slowdown apply to Agile skills?");
+            slowdownJumpLinger = Config.Bind("Slowdown", "Slowdown Jump Linger", 1.25f, "How long jump slowdown should linger for after using a combat skill.");
+            slowdownAgile = Config.Bind("Slowdown", "Slowdown Affects Agile?", false, "Should slowdown apply to Agile skills?");
 
-            changeCombatSkills = Config.Bind("Changes for Slowdown", "Change Combat Skills", true, "Changes some combat skills to not count as combat skills.");
-            fixHurtBoxes = Config.Bind("Changes for Slowdown", "Change Large Hurt Boxes", true, "Changes Acrid's, REX' and MUL-T's hurt boxes to be smaller.");
+            changeCombatSkills = Config.Bind("Changes for Slowdown", "Change Combat Skills?", true, "Changes some combat skills to not count as combat skills.");
+            fixHurtBoxes = Config.Bind("Changes for Slowdown", "Change Large Hurt Boxes?", true, "Changes Acrid's, REX' and MUL-T's hurt boxes to be smaller.");
 
             sprintSpeedMin = Config.Bind("Changes to Sprinting", "Minimum Sprint Speed Multiplier", 0.8f, "Decimal. This is a total multiplier, so the default 1.45x sprint speed is multiplied by this amount.");
             sprintSpeedMax = Config.Bind("Changes to Sprinting", "Maximum Sprint Speed Multiplier", 1.4f, "Decimal. This is a total multiplier, so the default 1.45x sprint speed is multiplied by this amount.");
-            sprintSpeedDurationToMax = Config.Bind("Changes to Sprinting", "Duration to achieve Maximum Sprint Speed Multiplier", 2.5f, "");
+            huntressSprintSpeedMin = Config.Bind("Changes to Sprinting", "Huntress Minimum Sprint Speed Multiplier", 0.85f, "Decimal. This is a total multiplier, so the default 1.45x sprint speed is multiplied by this amount.");
+            huntressSprintSpeedMax = Config.Bind("Changes to Sprinting", "Huntress Maximum Sprint Speed Multiplier", 1.1f, "Decimal. This is a total multiplier, so the default 1.45x sprint speed is multiplied by this amount.");
+            sprintSpeedDurationToMax = Config.Bind("Changes to Sprinting", "Time to achieve Maximum Sprint Speed Multiplier", 5f, "");
 
-            ModSettingsManager.AddOption(new CheckBoxOption(important1));
+            hyperbolicSpeedCap = Config.Bind("Changes to Speed", "Hyperbolic Speed Cap", 35f, "The Maximum Speed in m/s that items, buffs, etc slowly approach, but never reach, and never overcome. Set to a negative value to disable.");
+
+            enemyAIChanges = Config.Bind("Changes to AI", "Enable Enemy AI Changes?", true, "Changes monsters to have longer range for the most part");
+
             ModSettingsManager.AddOption(new CheckBoxOption(important2));
-            ModSettingsManager.AddOption(new CheckBoxOption(important3));
             ModSettingsManager.AddOption(new CheckBoxOption(important4));
 
+            ModSettingsManager.AddOption(new GenericButtonOption("Default Preset", "Slowdown", "Click me to change your preset to Default. Settings don't update visually until you re-open this menu.", ">    <", DefaultValues));
+            ModSettingsManager.AddOption(new GenericButtonOption("Inferno Preset", "Slowdown", "Click me to change your preset to Inferno Settings don't update visually until you re-open this menu.", ">    <", InfernoValues));
             ModSettingsManager.AddOption(new StepSliderOption(slowdownPercent, new StepSliderConfig() { min = 0f, max = 10f, increment = 0.05f }));
             ModSettingsManager.AddOption(new StepSliderOption(slowdownLinger, new StepSliderConfig() { min = 0f, max = 5f, increment = 0.05f }));
             ModSettingsManager.AddOption(new CheckBoxOption(slowdownScale));
@@ -120,15 +148,51 @@ namespace CombatRework
 
             ModSettingsManager.AddOption(new StepSliderOption(sprintSpeedMin, new StepSliderConfig() { min = 0f, max = 2f, increment = 0.05f }));
             ModSettingsManager.AddOption(new StepSliderOption(sprintSpeedMax, new StepSliderConfig() { min = 0f, max = 2f, increment = 0.05f }));
+            ModSettingsManager.AddOption(new StepSliderOption(huntressSprintSpeedMin, new StepSliderConfig() { min = 0f, max = 2f, increment = 0.05f }));
+            ModSettingsManager.AddOption(new StepSliderOption(huntressSprintSpeedMax, new StepSliderConfig() { min = 0f, max = 2f, increment = 0.05f }));
             ModSettingsManager.AddOption(new StepSliderOption(sprintSpeedDurationToMax, new StepSliderConfig() { min = 0.1f, max = 10f, increment = 0.1f }));
+
+            ModSettingsManager.AddOption(new StepSliderOption(hyperbolicSpeedCap, new StepSliderConfig() { min = -5f, max = 50f, increment = 5f }));
+
+            ModSettingsManager.AddOption(new CheckBoxOption(enemyAIChanges));
         }
 
         public void DefaultValues()
         {
+            slowdownPercent.Value = 1f;
+            slowdownLinger.Value = 0.75f;
+            slowdownScale.Value = true;
+            slowdownJumpPercent.Value = 1f;
+            slowdownJumpLinger.Value = 1.25f;
+            slowdownAgile.Value = false;
+            changeCombatSkills.Value = true;
+            fixHurtBoxes.Value = true;
+            sprintSpeedMin.Value = 0.8f;
+            sprintSpeedMax.Value = 1.4f;
+            huntressSprintSpeedMin.Value = 0.85f;
+            huntressSprintSpeedMax.Value = 1.1f;
+            sprintSpeedDurationToMax.Value = 5f;
+            hyperbolicSpeedCap.Value = 35f;
+            enemyAIChanges.Value = true;
         }
 
         public void InfernoValues()
         {
+            slowdownPercent.Value = 0.35f;
+            slowdownLinger.Value = 0.45f;
+            slowdownScale.Value = true;
+            slowdownJumpPercent.Value = 1f;
+            slowdownJumpLinger.Value = 0.8f;
+            slowdownAgile.Value = false;
+            changeCombatSkills.Value = true;
+            fixHurtBoxes.Value = true;
+            sprintSpeedMin.Value = 0.8f;
+            sprintSpeedMax.Value = 1.4f;
+            huntressSprintSpeedMin.Value = 0.85f;
+            huntressSprintSpeedMax.Value = 1.1f;
+            sprintSpeedDurationToMax.Value = 3f;
+            hyperbolicSpeedCap.Value = 35f;
+            enemyAIChanges.Value = true;
         }
 
         public void AddBuffs()

@@ -23,8 +23,8 @@ namespace CombatRework.Hooks
             ILCursor c = new(il);
 
             if (c.TryGotoNext(MoveType.Before,
-                x => x.MatchLdfld<CharacterBody>("sprintingSpeedMultiplier"),
-                x => x.MatchMul()))
+                x => x.MatchLdfld<CharacterBody>("sprintingSpeedMultiplier")))
+            // x => x.MatchMul()))
             {
                 c.Index++;
                 c.Emit(OpCodes.Ldarg_0);
@@ -44,6 +44,40 @@ namespace CombatRework.Hooks
             {
                 Main.ASLogger.LogError("Failed to apply Sprinting Changes Hook");
             }
+
+            c.Index = 0;
+
+            if (c.TryGotoNext(MoveType.Before,
+                x => x.MatchCallOrCallvirt<CharacterBody>("set_moveSpeed"),
+                x => x.MatchLdarg(0),
+                x => x.MatchLdarg(0),
+                x => x.MatchCallOrCallvirt<CharacterBody>("get_moveSpeed")))
+            {
+                c.EmitDelegate<Func<float, float>>((orig) =>
+                {
+                    orig = Math.Min(orig, GetHyperbolic(orig, Main.hyperbolicSpeedCap.Value, orig));
+                    return orig;
+                });
+            }
+            else
+            {
+                Main.ASLogger.LogError("Failed to apply Hyperbolic Speed Increase hook");
+            }
+        }
+
+        public static float GetHyperbolic(float firstStack, float cap, float chance) // Util.ConvertAmplificationPercentageIntoReductionPercentage but Better :zanysoup:
+        {
+            if (cap < 0f)
+            {
+                return firstStack;
+            }
+            if (firstStack >= cap) // should not happen, but failsafe
+            {
+                return cap * (chance / firstStack);
+            }
+            float count = chance / firstStack;
+            float coeff = 100 * firstStack / (cap - firstStack); // should be good
+            return cap * (1 - (100 / ((count * coeff) + 100)));
         }
 
         public static void GenericCharacterMain_ProcessJump(ILContext il)

@@ -18,6 +18,11 @@ namespace CombatRework.Components
         public void Start()
         {
             characterBody = GetComponent<CharacterBody>();
+            if (characterBody.bodyIndex == Main.huntressBodyIndex)
+            {
+                sprintSpeedMin = Main.huntressSprintSpeedMin.Value;
+                sprintSpeedMax = Main.huntressSprintSpeedMax.Value;
+            }
             sprintSpeedMult = sprintSpeedMin;
         }
 
@@ -36,8 +41,8 @@ namespace CombatRework.Components
             recalcTimer += Time.fixedDeltaTime;
             if (recalcTimer >= recalcInterval && sprintSpeedMult != sprintSpeedMax)
             {
-                sprintSpeedMin = Main.sprintSpeedMin.Value;
-                sprintSpeedMax = Main.sprintSpeedMax.Value;
+                sprintSpeedMin = characterBody.bodyIndex == Main.huntressBodyIndex ? Main.huntressSprintSpeedMin.Value : Main.sprintSpeedMin.Value;
+                sprintSpeedMax = characterBody.bodyIndex == Main.huntressBodyIndex ? Main.huntressSprintSpeedMax.Value : Main.sprintSpeedMax.Value;
                 characterBody.statsDirty = true;
                 recalcTimer = 0f;
             }
